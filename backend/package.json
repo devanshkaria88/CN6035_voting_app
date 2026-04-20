@@ -1,0 +1,45 @@
+{
+  "name": "classrep-vote-backend",
+  "version": "1.0.0",
+  "description": "Class Representative Voting System - Smart Contract & API Service",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js",
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "test:coverage": "hardhat coverage",
+    "deploy:sepolia": "hardhat run scripts/deploy.js --network sepolia",
+    "verify": "hardhat run scripts/verify.js --network sepolia",
+    "lint:sol": "solhint 'contracts/**/*.sol'",
+    "lint": "eslint 'src/**/*.js'",
+    "format": "prettier --write '**/*.{js,sol,json}'"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "ethers": "^6.13.4",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "helmet": "^8.0.0",
+    "joi": "^17.13.3",
+    "jsonwebtoken": "^9.0.2",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1",
+    "uuid": "^11.1.0",
+    "winston": "^3.17.0"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "eslint": "^8.57.1",
+    "hardhat": "^2.22.17",
+    "nodemon": "^3.1.9",
+    "prettier": "^3.4.2",
+    "prettier-plugin-solidity": "^1.4.2",
+    "solhint": "^5.0.4"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "license": "MIT"
+}
