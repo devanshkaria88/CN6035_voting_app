@@ -23,4 +23,12 @@ const verifySchema = Joi.object({
   }),
 });
 
-module.exports = { nonceSchema, verifySchema };
+const demoLoginSchema = Joi.object({
+  role: Joi.string().valid('admin', 'voter').required().messages({
+    'any.only': "role must be 'admin' or 'voter'",
+    'any.required': 'role is required',
+  }),
+  index: Joi.number().integer().min(0).optional(),
+});
+
+module.exports = { nonceSchema, verifySchema, demoLoginSchema };

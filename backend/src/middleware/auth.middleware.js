@@ -14,7 +14,13 @@ function authenticate(req, _res, next) {
   const token = header.slice(7);
   try {
     const decoded = authService.verifyToken(token);
-    req.user = { address: decoded.address, role: decoded.role };
+    req.user = {
+      address: decoded.address,
+      role: decoded.role,
+      isRegisteredVoter: decoded.isRegisteredVoter || false,
+      isDemo: decoded.isDemo === true,
+      keyIndex: typeof decoded.keyIndex === 'number' ? decoded.keyIndex : null,
+    };
     next();
   } catch (error) {
     next(error);
@@ -39,6 +45,22 @@ function requireAdmin(req, _res, next) {
 function requireVoter(req, _res, next) {
   if (!req.user) {
     return next(new AuthenticationError('Authentication required'));
+  }
+  if (req.user.role !== 'voter') {
+    return next(
+      new AuthorisationError(
+        'Only registered voters can perform this action',
+        'NOT_REGISTERED'
+      )
+    );
+  }
+  if (!req.user.isRegisteredVoter) {
+    return next(
+      new AuthorisationError(
+        'Address is not a registered voter on the blockchain',
+        'NOT_REGISTERED'
+      )
+    );
   }
   next();
 }

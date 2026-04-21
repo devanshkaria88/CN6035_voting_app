@@ -177,4 +177,73 @@ router.post(
   candidateController.create
 );
 
+/**
+ * @openapi
+ * /api/v1/candidates/{id}:
+ *   patch:
+ *     tags: [Candidates]
+ *     summary: Update a candidate's name and manifesto
+ *     description: Admin-only. Only callable before the election starts.
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           minimum: 0
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/AddCandidateRequest'
+ *     responses:
+ *       200: { description: Candidate updated }
+ *       400: { description: Validation error or election started }
+ *       401: { description: Not authenticated }
+ *       403: { description: Not admin }
+ *       404: { description: Candidate not found }
+ */
+router.patch(
+  '/:id',
+  authenticate,
+  requireAdmin,
+  validate(candidateIdParam, 'params'),
+  validate(addCandidateSchema),
+  candidateController.update
+);
+
+/**
+ * @openapi
+ * /api/v1/candidates/{id}:
+ *   delete:
+ *     tags: [Candidates]
+ *     summary: Remove a candidate
+ *     description: Admin-only. Only callable before the election starts. The contract uses swap-and-pop, so the last candidate's slot may be reassigned.
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           minimum: 0
+ *     responses:
+ *       200: { description: Candidate removed }
+ *       400: { description: Election already started }
+ *       401: { description: Not authenticated }
+ *       403: { description: Not admin }
+ *       404: { description: Candidate not found }
+ */
+router.delete(
+  '/:id',
+  authenticate,
+  requireAdmin,
+  validate(candidateIdParam, 'params'),
+  candidateController.remove
+);
+
 module.exports = router;

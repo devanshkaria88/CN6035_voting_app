@@ -124,6 +124,104 @@ describe('ClassRepVoting', function () {
     });
   });
 
+  describe('editCandidate', function () {
+    beforeEach(async function () {
+      await voting.addCandidate('Alice', 'Manifesto A');
+      await voting.addCandidate('Bob', 'Manifesto B');
+    });
+
+    it('should update name and manifesto and emit CandidateUpdated', async function () {
+      await expect(voting.editCandidate(0, 'Alicia', 'Updated A'))
+        .to.emit(voting, 'CandidateUpdated')
+        .withArgs(0, 'Alicia');
+      const c = await voting.getCandidate(0);
+      expect(c.name).to.equal('Alicia');
+      expect(c.manifesto).to.equal('Updated A');
+    });
+
+    it('should revert when called by non-admin', async function () {
+      await expect(
+        voting.connect(voter1).editCandidate(0, 'X', 'Y')
+      ).to.be.revertedWithCustomError(voting, 'NotAdmin');
+    });
+
+    it('should revert with invalid candidate id', async function () {
+      await expect(
+        voting.editCandidate(99, 'X', 'Y')
+      ).to.be.revertedWithCustomError(voting, 'InvalidCandidateId');
+    });
+
+    it('should revert with empty name', async function () {
+      await expect(
+        voting.editCandidate(0, '', 'Y')
+      ).to.be.revertedWithCustomError(voting, 'EmptyName');
+    });
+
+    it('should revert with empty manifesto', async function () {
+      await expect(
+        voting.editCandidate(0, 'X', '')
+      ).to.be.revertedWithCustomError(voting, 'EmptyManifesto');
+    });
+
+    it('should revert after election has started', async function () {
+      await voting.registerVoter(voter1.address);
+      await voting.startElection();
+      await expect(
+        voting.editCandidate(0, 'X', 'Y')
+      ).to.be.revertedWithCustomError(voting, 'ElectionAlreadyStarted');
+    });
+  });
+
+  describe('removeCandidate', function () {
+    beforeEach(async function () {
+      await voting.addCandidate('Alice', 'A');
+      await voting.addCandidate('Bob', 'B');
+      await voting.addCandidate('Chloe', 'C');
+    });
+
+    it('should remove a middle candidate via swap-and-pop and emit event', async function () {
+      await expect(voting.removeCandidate(0))
+        .to.emit(voting, 'CandidateRemoved')
+        .withArgs(0);
+      const all = await voting.getAllCandidates();
+      expect(all.length).to.equal(2);
+      // After swap-and-pop, slot 0 holds the previously-last candidate (Chloe)
+      // with its id rewritten to 0 so external lookups still work.
+      expect(all[0].name).to.equal('Chloe');
+      expect(all[0].id).to.equal(0n);
+      expect(all[1].name).to.equal('Bob');
+      expect(all[1].id).to.equal(1n);
+    });
+
+    it('should remove the last candidate without swap', async function () {
+      await voting.removeCandidate(2);
+      const all = await voting.getAllCandidates();
+      expect(all.length).to.equal(2);
+      expect(all[0].name).to.equal('Alice');
+      expect(all[1].name).to.equal('Bob');
+    });
+
+    it('should revert when called by non-admin', async function () {
+      await expect(
+        voting.connect(voter1).removeCandidate(0)
+      ).to.be.revertedWithCustomError(voting, 'NotAdmin');
+    });
+
+    it('should revert with invalid candidate id', async function () {
+      await expect(
+        voting.removeCandidate(99)
+      ).to.be.revertedWithCustomError(voting, 'InvalidCandidateId');
+    });
+
+    it('should revert after election has started', async function () {
+      await voting.registerVoter(voter1.address);
+      await voting.startElection();
+      await expect(
+        voting.removeCandidate(0)
+      ).to.be.revertedWithCustomError(voting, 'ElectionAlreadyStarted');
+    });
+  });
+
   describe('getCandidate', function () {
     it('should return the correct candidate', async function () {
       await voting.addCandidate('Alice', 'Manifesto A');

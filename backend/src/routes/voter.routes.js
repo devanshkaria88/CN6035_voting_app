@@ -17,6 +17,41 @@ const router = Router();
 
 /**
  * @openapi
+ * /api/v1/voters:
+ *   get:
+ *     tags: [Voters]
+ *     summary: List all registered voters (admin only)
+ *     description: Returns the list of voters registered on-chain. Reconstructed from VoterRegistered events.
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Voters retrieved
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         voters:
+ *                           type: array
+ *                           items:
+ *                             $ref: '#/components/schemas/Voter'
+ *                         total:
+ *                           type: integer
+ *       401:
+ *         description: Not authenticated
+ *       403:
+ *         description: Not admin
+ */
+router.get('/', authenticate, requireAdmin, voterController.list);
+
+/**
+ * @openapi
  * /api/v1/voters/{address}:
  *   get:
  *     tags: [Voters]

@@ -31,6 +31,27 @@ const candidateController = {
       next(error);
     }
   },
+
+  async update(req, res, next) {
+    try {
+      const id = Number(req.params.id);
+      const { name, manifesto } = req.body;
+      const result = await blockchainService.editCandidate(id, name, manifesto);
+      sendSuccess(res, result, 'Candidate updated successfully');
+    } catch (error) {
+      next(error);
+    }
+  },
+
+  async remove(req, res, next) {
+    try {
+      const id = Number(req.params.id);
+      const result = await blockchainService.removeCandidate(id);
+      sendSuccess(res, result, 'Candidate removed successfully');
+    } catch (error) {
+      next(error);
+    }
+  },
 };
 
 module.exports = candidateController;

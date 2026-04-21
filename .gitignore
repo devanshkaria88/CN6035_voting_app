@@ -1,0 +1,33 @@
+# OS / editor
+.DS_Store
+*.swp
+*.swo
+.idea/
+*.suo
+
+# Cursor workspace config
+.cursor/
+
+# Project-local notes that should never be checked in
+project status/
+project_status/
+
+# Env files (per-package envs are also ignored in their own .gitignore)
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Dependencies (kept here as a safety net; per-package .gitignore
+# files are the primary defence)
+node_modules/
+
+# Build output (safety net)
+dist/
+build/
+coverage/

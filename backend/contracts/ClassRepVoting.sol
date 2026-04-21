@@ -44,6 +44,8 @@ contract ClassRepVoting {
     // ──────────────────────────────────────────────
 
     event CandidateAdded(uint256 indexed id, string name);
+    event CandidateUpdated(uint256 indexed id, string name);
+    event CandidateRemoved(uint256 indexed id);
     event VoterRegistered(address indexed voterAddress);
     event VoteCast(address indexed voterAddress, uint256 indexed candidateId);
     event ElectionStarted(uint256 timestamp);
@@ -78,7 +80,7 @@ contract ClassRepVoting {
         _;
     }
 
-    modifier electionNotStartedYet() {
+    modifier electionNotStarted() {
         if (electionStarted) revert ElectionAlreadyStarted();
         _;
     }
@@ -131,7 +133,7 @@ contract ClassRepVoting {
     function addCandidate(
         string calldata _name,
         string calldata _manifesto
-    ) external onlyAdmin electionNotStartedYet returns (uint256) {
+    ) external onlyAdmin electionNotStarted returns (uint256) {
         if (bytes(_name).length == 0) revert EmptyName();
         if (bytes(_manifesto).length == 0) revert EmptyManifesto();
 
@@ -148,13 +150,66 @@ contract ClassRepVoting {
     }
 
     /**
+     * @notice Update an existing candidate's name and manifesto.
+     * @dev Only callable by admin before the election starts.
+     * @param _candidateId  The ID of the candidate to update.
+     * @param _name         New candidate name (non-empty).
+     * @param _manifesto    New campaign statement (non-empty).
+     */
+    function editCandidate(
+        uint256 _candidateId,
+        string calldata _name,
+        string calldata _manifesto
+    )
+        external
+        onlyAdmin
+        electionNotStarted
+        validCandidate(_candidateId)
+    {
+        if (bytes(_name).length == 0) revert EmptyName();
+        if (bytes(_manifesto).length == 0) revert EmptyManifesto();
+
+        candidates[_candidateId].name = _name;
+        candidates[_candidateId].manifesto = _manifesto;
+
+        emit CandidateUpdated(_candidateId, _name);
+    }
+
+    /**
+     * @notice Remove a candidate from the election.
+     * @dev Uses swap-and-pop to keep the array compact. The last candidate's
+     *      ID is rewritten to the removed slot's ID so external integrations
+     *      that cached IDs see consistent on-chain state. Only callable by
+     *      admin before the election starts.
+     * @param _candidateId  The ID of the candidate to remove.
+     */
+    function removeCandidate(
+        uint256 _candidateId
+    )
+        external
+        onlyAdmin
+        electionNotStarted
+        validCandidate(_candidateId)
+    {
+        uint256 lastIndex = candidates.length - 1;
+        if (_candidateId != lastIndex) {
+            Candidate memory moved = candidates[lastIndex];
+            moved.id = _candidateId;
+            candidates[_candidateId] = moved;
+        }
+        candidates.pop();
+
+        emit CandidateRemoved(_candidateId);
+    }
+
+    /**
      * @notice Register a single voter by wallet address.
      * @param _voterAddress  The address to register.
      * @return success       True if registration succeeded.
      */
     function registerVoter(
         address _voterAddress
-    ) external onlyAdmin electionNotStartedYet returns (bool) {
+    ) external onlyAdmin electionNotStarted returns (bool) {
         if (_voterAddress == address(0)) revert InvalidAddress();
         if (voters[_voterAddress].isRegistered)
             revert VoterAlreadyRegistered(_voterAddress);
@@ -173,7 +228,7 @@ contract ClassRepVoting {
      */
     function registerVotersBatch(
         address[] calldata _voterAddresses
-    ) external onlyAdmin electionNotStartedYet returns (uint256) {
+    ) external onlyAdmin electionNotStarted returns (uint256) {
         if (_voterAddresses.length == 0) revert EmptyAddressArray();
 
         uint256 count = 0;
@@ -197,7 +252,7 @@ contract ClassRepVoting {
     function startElection()
         external
         onlyAdmin
-        electionNotStartedYet
+        electionNotStarted
         returns (bool)
     {
         if (candidates.length == 0) revert NoCandidatesRegistered();

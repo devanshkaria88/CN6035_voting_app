@@ -1,7 +1,11 @@
 const { Router } = require('express');
 const authController = require('../controllers/auth.controller');
 const { validate } = require('../middleware/validation.middleware');
-const { nonceSchema, verifySchema } = require('../validators/auth.validator');
+const {
+  nonceSchema,
+  verifySchema,
+  demoLoginSchema,
+} = require('../validators/auth.validator');
 
 const router = Router();
 
@@ -96,5 +100,51 @@ router.post('/nonce', validate(nonceSchema), authController.getNonce);
  *               $ref: '#/components/schemas/ApiError'
  */
 router.post('/verify', validate(verifySchema), authController.verify);
+
+/**
+ * @openapi
+ * /api/v1/auth/demo-accounts:
+ *   get:
+ *     tags: [Auth]
+ *     summary: List seeded demo accounts (development only)
+ *     description: Returns the demo admin and demo voter wallet addresses configured on the server. Returns 404 when ENABLE_DEMO_LOGIN is disabled.
+ *     responses:
+ *       200:
+ *         description: Demo accounts retrieved
+ *       404:
+ *         description: Demo login is disabled
+ */
+router.get('/demo-accounts', authController.listDemoAccounts);
+
+/**
+ * @openapi
+ * /api/v1/auth/demo:
+ *   post:
+ *     tags: [Auth]
+ *     summary: Sign in as a seeded demo account (development only)
+ *     description: Issues a JWT for one of the seeded demo wallets without requiring a wallet signature. Disabled in production. The returned token is flagged as `isDemo` so the backend can sign on-chain transactions on the user's behalf.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [role]
+ *             properties:
+ *               role:
+ *                 type: string
+ *                 enum: [admin, voter]
+ *               index:
+ *                 type: integer
+ *                 description: Voter index (ignored when role is admin).
+ *     responses:
+ *       200:
+ *         description: Authentication successful
+ *       400:
+ *         description: Invalid role
+ *       404:
+ *         description: Demo login is disabled
+ */
+router.post('/demo', validate(demoLoginSchema), authController.demoLogin);
 
 module.exports = router;
