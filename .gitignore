@@ -11,6 +11,8 @@
 # Project-local notes that should never be checked in
 project status/
 project_status/
+backend_prd.md
+frontend_prd.md
 
 # Env files (per-package envs are also ignored in their own .gitignore)
 .env
