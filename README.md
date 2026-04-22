@@ -314,8 +314,6 @@ The frontend has no automated test suite yet. Manual smoke testing is via the de
 - No CI yet. No frontend test suite yet.
 - `JWT_SECRET` is read lazily; the server should fail fast at startup if it is missing.
 
-A more detailed gap analysis lives in `project status/06-gaps-and-next-steps.md` (gitignored).
-
 ## Licence
 
 MIT.
